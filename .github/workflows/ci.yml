@@ -23,7 +23,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --recursive --frozen-lockfile
 
       - name: Run linter
         run: pnpm run lint
@@ -44,7 +44,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --recursive --frozen-lockfile
 
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps chromium
@@ -80,7 +80,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --recursive --frozen-lockfile
 
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps chromium
