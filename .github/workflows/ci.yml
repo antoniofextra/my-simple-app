@@ -71,7 +71,7 @@ jobs:
         run: pnpm install --recursive --frozen-lockfile
 
       - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Generate Prisma Client
         run: cd backend && pnpm prisma generate
@@ -113,7 +113,7 @@ jobs:
         run: pnpm install --recursive --frozen-lockfile
 
       - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Generate Prisma Client
         run: cd backend && pnpm prisma generate
