@@ -83,11 +83,11 @@ jobs:
 
       - name: Install Playwright Browsers  
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium firefox webkit
+        run: pnpm exec playwright install-deps chromium
 
       - name: Generate Prisma Client
         run: cd backend && pnpm prisma generate
@@ -143,11 +143,11 @@ jobs:
 
       - name: Install Playwright Browsers  
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium firefox webkit
+        run: pnpm exec playwright install-deps chromium
 
       - name: Generate Prisma Client
         run: cd backend && pnpm prisma generate
