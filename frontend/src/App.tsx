@@ -136,7 +136,7 @@ function App() {
               {todo.completed ? '✅' : ''}
             </div>
             {todo.location && (
-              <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
+              <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }} data-testid={`todo-location-${todo.id}`}>
                 📍 {todo.location}
               </div>
             )}
