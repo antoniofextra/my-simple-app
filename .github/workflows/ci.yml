@@ -46,6 +46,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --recursive --frozen-lockfile
 
+      - name: Generate Prisma Client
+        run: cd backend && pnpm prisma generate
+
+      - name: Setup test database
+        run: cd backend && pnpm prisma db push
+
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps chromium
 
@@ -81,6 +87,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --recursive --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: cd backend && pnpm prisma generate
+
+      - name: Setup test database
+        run: cd backend && pnpm prisma db push
 
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps chromium
