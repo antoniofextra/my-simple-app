@@ -15,8 +15,10 @@ fastify.get('/api/todos', async () => {
 })
 
 fastify.post('/api/todos', async (request, reply) => {
-  const { title } = request.body as { title: string }
-  const todo = await prisma.todo.create({ data: { title } })
+  const { title, location } = request.body as { title: string; location?: string }
+  // Validate and truncate location to max 20 chars if provided
+  const sanitizedLocation = location ? location.slice(0, 20).trim() || null : null
+  const todo = await prisma.todo.create({ data: { title, location: sanitizedLocation } })
   reply.code(201).send(todo)
 })
 

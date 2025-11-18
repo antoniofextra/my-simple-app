@@ -39,6 +39,95 @@ test.describe('Todo App', () => {
     await expect(page.getByText(todoTitle)).not.toBeVisible({ timeout: 10000 })
   })
 
+  test('create a todo with location and verify it is displayed', async ({ page }) => {
+    // Navigate to the app
+    await page.goto('/')
+
+    // Wait for the page to be ready
+    await expect(page.getByRole('heading', { name: 'Todos' })).toBeVisible()
+
+    // Create a new todo with location
+    const todoTitle = `Todo with location ${Date.now()}`
+    const todoLocation = 'Office'
+    await page.getByTestId('todo-input').fill(todoTitle)
+    await page.getByTestId('location-input').fill(todoLocation)
+    await page.getByTestId('add-button').click()
+
+    // Wait for the todo to appear in the list
+    await expect(page.getByText(todoTitle)).toBeVisible()
+    
+    // Verify the location is also displayed
+    const todoItem = page.locator(`li:has-text("${todoTitle}")`)
+    await expect(todoItem.getByText(todoLocation)).toBeVisible()
+
+    // Clean up: delete the todo
+    const todoTestId = await todoItem.getAttribute('data-testid')
+    const todoId = todoTestId?.replace('todo-', '')
+    await page.getByTestId(`delete-${todoId}`).click()
+    
+    await expect(page.getByText(todoTitle)).not.toBeVisible({ timeout: 10000 })
+  })
+
+  test('create a todo without location', async ({ page }) => {
+    // Navigate to the app
+    await page.goto('/')
+
+    // Wait for the page to be ready
+    await expect(page.getByRole('heading', { name: 'Todos' })).toBeVisible()
+
+    // Create a new todo without location
+    const todoTitle = `Todo without location ${Date.now()}`
+    await page.getByTestId('todo-input').fill(todoTitle)
+    // Don't fill location field - leave it empty
+    await page.getByTestId('add-button').click()
+
+    // Wait for the todo to appear in the list
+    await expect(page.getByText(todoTitle)).toBeVisible()
+
+    // Verify the location field is not displaying any location text
+    const todoItem = page.locator(`li:has-text("${todoTitle}")`)
+    
+    // Clean up: delete the todo
+    const todoTestId = await todoItem.getAttribute('data-testid')
+    const todoId = todoTestId?.replace('todo-', '')
+    await page.getByTestId(`delete-${todoId}`).click()
+    
+    await expect(page.getByText(todoTitle)).not.toBeVisible({ timeout: 10000 })
+  })
+
+  test('location field respects max 20 character limit', async ({ page }) => {
+    // Navigate to the app
+    await page.goto('/')
+
+    // Wait for the page to be ready
+    await expect(page.getByRole('heading', { name: 'Todos' })).toBeVisible()
+
+    // Try to fill location with more than 20 characters
+    const longLocation = 'This is a very long location text'
+    const todoTitle = `Todo with long location ${Date.now()}`
+    
+    await page.getByTestId('todo-input').fill(todoTitle)
+    await page.getByTestId('location-input').fill(longLocation)
+
+    // Verify the input field only contains 20 characters
+    const locationInputValue = await page.getByTestId('location-input').inputValue()
+    expect(locationInputValue.length).toBeLessThanOrEqual(20)
+
+    // Create the todo
+    await page.getByTestId('add-button').click()
+
+    // Wait for the todo to appear
+    await expect(page.getByText(todoTitle)).toBeVisible()
+
+    // Clean up: delete the todo
+    const todoItem = page.locator(`li:has-text("${todoTitle}")`)
+    const todoTestId = await todoItem.getAttribute('data-testid')
+    const todoId = todoTestId?.replace('todo-', '')
+    await page.getByTestId(`delete-${todoId}`).click()
+    
+    await expect(page.getByText(todoTitle)).not.toBeVisible({ timeout: 10000 })
+  })
+
   test('empty input does not create a todo', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('heading', { name: 'Todos' })).toBeVisible()

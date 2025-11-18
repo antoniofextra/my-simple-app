@@ -38,8 +38,8 @@ describe('App', () => {
 
   it('loads and displays todos on mount', async () => {
     const mockTodos = [
-      { id: 1, title: 'Test Todo 1', completed: false, createdAt: new Date().toISOString() },
-      { id: 2, title: 'Test Todo 2', completed: false, createdAt: new Date().toISOString() },
+      { id: 1, title: 'Test Todo 1', location: null, completed: false, createdAt: new Date().toISOString() },
+      { id: 2, title: 'Test Todo 2', location: 'Home', completed: false, createdAt: new Date().toISOString() },
     ]
 
     vi.mocked(fetch).mockResolvedValue(createFetchResponse(mockTodos) as Response)
@@ -55,7 +55,7 @@ describe('App', () => {
   it('submits a new todo when form is submitted', async () => {
     const user = userEvent.setup()
     const mockTodos = [
-      { id: 1, title: 'New Todo', completed: false, createdAt: new Date().toISOString() },
+      { id: 1, title: 'New Todo', location: null, completed: false, createdAt: new Date().toISOString() },
     ]
 
     // First call: initial load (empty)
@@ -78,13 +78,13 @@ describe('App', () => {
       expect(screen.getByText('New Todo')).toBeInTheDocument()
     })
 
-    // Verify POST was called
+    // Verify POST was called without location
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4000/api/todos',
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'New Todo' }),
+        body: JSON.stringify({ title: 'New Todo', location: undefined }),
       })
     )
   })
@@ -126,7 +126,7 @@ describe('App', () => {
   it('deletes a todo when delete button is clicked', async () => {
     const user = userEvent.setup()
     const mockTodos = [
-      { id: 1, title: 'Todo to delete', completed: false, createdAt: new Date().toISOString() },
+      { id: 1, title: 'Todo to delete', location: null, completed: false, createdAt: new Date().toISOString() },
     ]
 
     // First call: initial load with todos
@@ -161,8 +161,8 @@ describe('App', () => {
 
   it('shows Delete All button when todos exist', async () => {
     const mockTodos = [
-      { id: 1, title: 'Todo 1', completed: false, createdAt: new Date().toISOString() },
-      { id: 2, title: 'Todo 2', completed: false, createdAt: new Date().toISOString() },
+      { id: 1, title: 'Todo 1', location: null, completed: false, createdAt: new Date().toISOString() },
+      { id: 2, title: 'Todo 2', location: 'Office', completed: false, createdAt: new Date().toISOString() },
     ]
 
     vi.mocked(fetch).mockResolvedValue(createFetchResponse(mockTodos) as Response)
@@ -187,9 +187,9 @@ describe('App', () => {
   it('deletes all todos when Delete All button is clicked', async () => {
     const user = userEvent.setup()
     const mockTodos = [
-      { id: 1, title: 'Todo 1', completed: false, createdAt: new Date().toISOString() },
-      { id: 2, title: 'Todo 2', completed: false, createdAt: new Date().toISOString() },
-      { id: 3, title: 'Todo 3', completed: false, createdAt: new Date().toISOString() },
+      { id: 1, title: 'Todo 1', location: null, completed: false, createdAt: new Date().toISOString() },
+      { id: 2, title: 'Todo 2', location: 'Home', completed: false, createdAt: new Date().toISOString() },
+      { id: 3, title: 'Todo 3', location: null, completed: false, createdAt: new Date().toISOString() },
     ]
 
     // First call: initial load with todos
@@ -224,6 +224,57 @@ describe('App', () => {
         method: 'DELETE',
       })
     )
+  })
+
+  it('submits a new todo with location', async () => {
+    const user = userEvent.setup()
+    const mockTodos = [
+      { id: 1, title: 'Todo with location', location: 'Office', completed: false, createdAt: new Date().toISOString() },
+    ]
+
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(createFetchResponse([]) as Response)
+      .mockResolvedValueOnce(createFetchResponse(mockTodos[0]) as Response)
+      .mockResolvedValueOnce(createFetchResponse(mockTodos) as Response)
+
+    render(<App />)
+
+    const titleInput = screen.getByPlaceholderText(/new todo title/i)
+    const locationInput = screen.getByTestId('location-input')
+    const addButton = screen.getByRole('button', { name: /add/i })
+
+    await user.type(titleInput, 'Todo with location')
+    await user.type(locationInput, 'Office')
+    await user.click(addButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('Todo with location')).toBeInTheDocument()
+    })
+
+    // Verify POST was called with location
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost:4000/api/todos',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Todo with location', location: 'Office' }),
+      })
+    )
+  })
+
+  it('displays location in todo item', async () => {
+    const mockTodos = [
+      { id: 1, title: 'Todo with location', location: 'Kitchen', completed: false, createdAt: new Date().toISOString() },
+    ]
+
+    vi.mocked(fetch).mockResolvedValue(createFetchResponse(mockTodos) as Response)
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Todo with location')).toBeInTheDocument()
+      expect(screen.getByText('Kitchen')).toBeInTheDocument()
+    })
   })
 })
 
