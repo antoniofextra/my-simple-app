@@ -70,17 +70,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install --recursive --frozen-lockfile
 
-      - name: Debug - Check Playwright installation
-        run: |
-          echo "Checking if Playwright is installed..."
-          ls -la node_modules/.bin/ | grep playwright || echo "Playwright not found in node_modules/.bin"
-          which npx || echo "npx not found"
-          node -e "console.log(require('./package.json').devDependencies['@playwright/test'])"
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('./package.json').devDependencies['@playwright/test']")" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
 
       - name: Install Playwright Browsers  
-        run: |
-          echo "Installing Playwright browsers..."
-          ./node_modules/.bin/playwright install --with-deps chromium firefox webkit
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium firefox webkit
 
       - name: Generate Prisma Client
         run: cd backend && pnpm prisma generate
@@ -123,17 +130,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install --recursive --frozen-lockfile
 
-      - name: Debug - Check Playwright installation
-        run: |
-          echo "Checking if Playwright is installed..."
-          ls -la node_modules/.bin/ | grep playwright || echo "Playwright not found in node_modules/.bin"
-          which npx || echo "npx not found"
-          node -e "console.log(require('./package.json').devDependencies['@playwright/test'])"
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('./package.json').devDependencies['@playwright/test']")" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
 
       - name: Install Playwright Browsers  
-        run: |
-          echo "Installing Playwright browsers..."
-          ./node_modules/.bin/playwright install --with-deps chromium firefox webkit
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium firefox webkit
 
       - name: Generate Prisma Client
         run: cd backend && pnpm prisma generate
