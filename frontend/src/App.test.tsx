@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import '@testing-library/jest-dom'
 import App from './App'
 
 // Mock fetch
-global.fetch = vi.fn()
+globalThis.fetch = vi.fn()
 
 function createFetchResponse(data: unknown) {
   return {
@@ -152,6 +153,73 @@ describe('App', () => {
     // Verify DELETE was called
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4000/api/todos/1',
+      expect.objectContaining({
+        method: 'DELETE',
+      })
+    )
+  })
+
+  it('shows Delete All button when todos exist', async () => {
+    const mockTodos = [
+      { id: 1, title: 'Todo 1', completed: false, createdAt: new Date().toISOString() },
+      { id: 2, title: 'Todo 2', completed: false, createdAt: new Date().toISOString() },
+    ]
+
+    vi.mocked(fetch).mockResolvedValue(createFetchResponse(mockTodos) as Response)
+    
+    render(<App />)
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('delete-all-button')).toBeInTheDocument()
+    })
+  })
+
+  it('hides Delete All button when no todos exist', async () => {
+    vi.mocked(fetch).mockResolvedValue(createFetchResponse([]) as Response)
+    
+    render(<App />)
+    
+    await waitFor(() => {
+      expect(screen.queryByTestId('delete-all-button')).not.toBeInTheDocument()
+    })
+  })
+
+  it('deletes all todos when Delete All button is clicked', async () => {
+    const user = userEvent.setup()
+    const mockTodos = [
+      { id: 1, title: 'Todo 1', completed: false, createdAt: new Date().toISOString() },
+      { id: 2, title: 'Todo 2', completed: false, createdAt: new Date().toISOString() },
+      { id: 3, title: 'Todo 3', completed: false, createdAt: new Date().toISOString() },
+    ]
+
+    // First call: initial load with todos
+    // Second call: DELETE ALL response
+    // Third call: reload after DELETE ALL (empty)
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(createFetchResponse(mockTodos) as Response)
+      .mockResolvedValueOnce({ ok: true, status: 204 } as Response)
+      .mockResolvedValueOnce(createFetchResponse([]) as Response)
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Todo 1')).toBeInTheDocument()
+      expect(screen.getByText('Todo 2')).toBeInTheDocument()
+      expect(screen.getByText('Todo 3')).toBeInTheDocument()
+    })
+
+    const deleteAllButton = screen.getByTestId('delete-all-button')
+    await user.click(deleteAllButton)
+
+    await waitFor(() => {
+      expect(screen.queryByText('Todo 1')).not.toBeInTheDocument()
+      expect(screen.queryByText('Todo 2')).not.toBeInTheDocument()
+      expect(screen.queryByText('Todo 3')).not.toBeInTheDocument()
+    })
+
+    // Verify DELETE ALL was called
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost:4000/api/todos',
       expect.objectContaining({
         method: 'DELETE',
       })

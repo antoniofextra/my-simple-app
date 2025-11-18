@@ -46,6 +46,11 @@ describe('Todo API', () => {
       reply.code(204).send()
     })
 
+    app.delete('/api/todos', async (request, reply) => {
+      await prisma.todo.deleteMany()
+      reply.code(204).send()
+    })
+
     await app.ready()
   })
 
@@ -166,6 +171,50 @@ describe('Todo API', () => {
       })
 
       expect(response.statusCode).toBe(500) // Prisma throws error
+    })
+  })
+
+  describe('DELETE /api/todos', () => {
+    it('deletes all todos and returns 204', async () => {
+      // Create multiple todos
+      await prisma.todo.create({ data: { title: 'Todo 1' } })
+      await prisma.todo.create({ data: { title: 'Todo 2' } })
+      await prisma.todo.create({ data: { title: 'Todo 3' } })
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/api/todos',
+      })
+
+      expect(response.statusCode).toBe(204)
+      expect(response.body).toBe('')
+    })
+
+    it('removes all todos from the database', async () => {
+      // Create multiple todos
+      await prisma.todo.create({ data: { title: 'Todo 1' } })
+      await prisma.todo.create({ data: { title: 'Todo 2' } })
+      await prisma.todo.create({ data: { title: 'Todo 3' } })
+
+      await app.inject({
+        method: 'DELETE',
+        url: '/api/todos',
+      })
+
+      const todos = await prisma.todo.findMany()
+      expect(todos).toHaveLength(0)
+    })
+
+    it('works successfully when no todos exist', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/api/todos',
+      })
+
+      expect(response.statusCode).toBe(204)
+      
+      const todos = await prisma.todo.findMany()
+      expect(todos).toHaveLength(0)
     })
   })
 

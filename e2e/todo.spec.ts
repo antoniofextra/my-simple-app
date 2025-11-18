@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Todo App', () => {
+  // Clean up database before each test to avoid flakiness
+  test.beforeEach(async ({ request }) => {
+    await request.delete('http://localhost:4000/api/todos')
+  })
+
   test('create a todo, see it listed, then delete it', async ({ page }) => {
     // Navigate to the app
     await page.goto('/')
@@ -87,6 +92,67 @@ test.describe('Todo App', () => {
     await expect(page.getByText(todos[1])).not.toBeVisible({ timeout: 10000 })
     await expect(page.getByText(todos[0])).toBeVisible()
     await expect(page.getByText(todos[2])).toBeVisible()
+  })
+
+  test('Delete All button appears when todos exist and is hidden when empty', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByRole('heading', { name: 'Todos' })).toBeVisible()
+
+    // Initially, Delete All button should not be visible (assuming empty list)
+    const initialDeleteAllButton = page.getByTestId('delete-all-button')
+    
+    // Create a todo
+    const todoTitle = `Test Todo ${Date.now()}`
+    await page.getByTestId('todo-input').fill(todoTitle)
+    await page.getByTestId('add-button').click()
+    await expect(page.getByText(todoTitle)).toBeVisible()
+
+    // Now Delete All button should be visible
+    await expect(initialDeleteAllButton).toBeVisible()
+
+    // Click Delete All
+    await initialDeleteAllButton.click()
+
+    // Verify todo is gone
+    await expect(page.getByText(todoTitle)).not.toBeVisible({ timeout: 10000 })
+
+    // Delete All button should no longer be visible
+    await expect(initialDeleteAllButton).not.toBeVisible({ timeout: 10000 })
+  })
+
+  test('Delete All button removes all todos', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByRole('heading', { name: 'Todos' })).toBeVisible()
+
+    // Create multiple todos
+    const todos = [
+      `Todo A ${Date.now()}`,
+      `Todo B ${Date.now()}`,
+      `Todo C ${Date.now()}`,
+    ]
+
+    for (const todo of todos) {
+      await page.getByTestId('todo-input').fill(todo)
+      await page.getByTestId('add-button').click()
+      await expect(page.getByText(todo)).toBeVisible()
+    }
+
+    // Verify all todos are visible
+    for (const todo of todos) {
+      await expect(page.getByText(todo)).toBeVisible()
+    }
+
+    // Click Delete All
+    await page.getByTestId('delete-all-button').click()
+
+    // Verify all todos are gone
+    for (const todo of todos) {
+      await expect(page.getByText(todo)).not.toBeVisible({ timeout: 10000 })
+    }
+
+    // Verify no todo items exist
+    const todoItems = page.locator('li[data-testid^="todo-"]')
+    await expect(todoItems).toHaveCount(0)
   })
 })
 

@@ -64,6 +64,21 @@ function App() {
     }
   }
 
+  const handleDeleteAll = async () => {
+    try {
+      setError(null)
+      const res = await fetch('http://localhost:4000/api/todos', {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        throw new Error(`Failed to delete all todos: ${res.statusText}`)
+      }
+      await loadTodos()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    }
+  }
+
   return (
     <div className="App">
       <h1>Todos</h1>
@@ -78,6 +93,16 @@ function App() {
         />
         <button type="submit" data-testid="add-button">Add</button>
       </form>
+
+      {todos.length > 0 && (
+        <button 
+          onClick={handleDeleteAll} 
+          data-testid="delete-all-button"
+          style={{ marginBottom: '1rem' }}
+        >
+          Delete All
+        </button>
+      )}
 
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
