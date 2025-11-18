@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Todo App', () => {
+  // Clean up database before each test to avoid flakiness
+  test.beforeEach(async ({ request }) => {
+    await request.delete('http://localhost:4000/api/todos')
+  })
+
   test('create a todo, see it listed, then delete it', async ({ page }) => {
     // Navigate to the app
     await page.goto('/')
