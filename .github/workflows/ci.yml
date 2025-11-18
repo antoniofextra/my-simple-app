@@ -28,6 +28,30 @@ jobs:
       - name: Run linter
         run: pnpm run lint
 
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --recursive --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: cd backend && pnpm prisma generate
+
+      - name: Run unit tests
+        run: pnpm test:unit
+
   test:
     name: E2E Tests
     runs-on: ubuntu-latest
