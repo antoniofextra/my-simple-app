@@ -1,0 +1,2 @@
+# Run e2e tests before pushing
+pnpm test
