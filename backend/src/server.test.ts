@@ -189,7 +189,7 @@ describe('Todo API', () => {
       expect(response.statusCode).toBe(201)
       const todo = JSON.parse(response.body)
       expect(todo.location).toBe('This is a very long')
-      expect(todo.location).toHaveLength(20)
+      expect(todo.location.length).toBeLessThanOrEqual(20)
     })
   })
 
