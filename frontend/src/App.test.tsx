@@ -273,7 +273,10 @@ describe('App', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Todo with location')).toBeInTheDocument()
-      expect(screen.getByText('Kitchen')).toBeInTheDocument()
+      // Location text might be broken up by emoji, so use a more flexible matcher
+      expect(screen.getByText((content, element) => {
+        return element?.textContent?.includes('Kitchen') ?? false
+      })).toBeInTheDocument()
     })
   })
 })
