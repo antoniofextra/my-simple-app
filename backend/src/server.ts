@@ -26,6 +26,11 @@ fastify.delete('/api/todos/:id', async (request, reply) => {
   reply.code(204).send()
 })
 
+fastify.delete('/api/todos', async (request, reply) => {
+  await prisma.todo.deleteMany()
+  reply.code(204).send()
+})
+
 const start = async () => {
   try {
     await fastify.listen({ port: 4000 })
