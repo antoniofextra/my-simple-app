@@ -8,7 +8,7 @@
     "prepare": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
-    "setup": "prisma migrate dev --skip-generate || prisma db push --skip-generate",
+    "setup": "prisma db push --skip-generate --accept-data-loss",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
