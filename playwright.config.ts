@@ -29,7 +29,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'cd backend && pnpm run dev',
-      url: 'http://localhost:4000/api/todos',
+      url: 'http://localhost:4000/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },
