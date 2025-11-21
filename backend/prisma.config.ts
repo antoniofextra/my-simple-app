@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import dotenv from "dotenv";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,6 +22,6 @@ export default defineConfig({
   },
   engine: "classic",
   datasource: {
-    url: env("DATABASE_URL"),
+    url: process.env.DATABASE_URL || "file:./prisma/dev.db",
   },
 });
