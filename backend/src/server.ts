@@ -42,34 +42,38 @@ fastify.delete('/api/todos', async (request, reply) => {
   reply.code(204).send()
 })
 
-const start = async () => {
-  try {
-    // Initialize Prisma Client with retry logic
-    let retries = 3
-    let connected = false
-    
-    while (retries > 0 && !connected) {
-      try {
-        prisma = new PrismaClient()
-        await prisma.$connect()
-        fastify.log.info('Database connected')
-        connected = true
-      } catch (dbErr) {
-        retries--
-        if (retries > 0) {
-          fastify.log.warn(`Failed to connect to database, retrying... (${retries} attempts left)`)
-          await new Promise(resolve => setTimeout(resolve, 1000))
-        } else {
-          fastify.log.warn(`Failed to connect to database after retries: ${String(dbErr)}`)
-          // Continue anyway - health endpoint will work, but data endpoints will fail
-        }
+async function initializeDatabase() {
+  let retries = 3
+  let connected = false
+  
+  while (retries > 0 && !connected) {
+    try {
+      prisma = new PrismaClient()
+      await prisma.$connect()
+      fastify.log.info('Database connected')
+      connected = true
+    } catch (dbErr) {
+      retries--
+      if (retries > 0) {
+        fastify.log.warn(`Failed to connect to database, retrying... (${retries} attempts left)`)
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      } else {
+        fastify.log.warn(`Failed to connect to database after retries: ${String(dbErr)}`)
+        throw dbErr
       }
     }
+  }
+}
+
+const start = async () => {
+  try {
+    // Initialize database connection
+    await initializeDatabase()
 
     await fastify.listen({ port: 4000 })
     fastify.log.info('Server ready on port 4000')
   } catch (err) {
-    fastify.log.error(err)
+    fastify.log.error(`Failed to start server: ${String(err)}`)
     process.exit(1)
   }
 }
