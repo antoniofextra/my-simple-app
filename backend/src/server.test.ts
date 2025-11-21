@@ -17,6 +17,7 @@ describe('Todo API', () => {
       CREATE TABLE IF NOT EXISTS Todo (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
+        location TEXT,
         completed BOOLEAN NOT NULL DEFAULT 0,
         createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -34,9 +35,11 @@ describe('Todo API', () => {
       return prisma.todo.findMany({ orderBy: { createdAt: 'desc' } })
     })
 
-    app.post<{ Body: { title: string } }>('/api/todos', async (request, reply) => {
-      const { title } = request.body
-      const todo = await prisma.todo.create({ data: { title } })
+    app.post<{ Body: { title: string; location?: string } }>('/api/todos', async (request, reply) => {
+      const { title, location } = request.body
+      // Validate and truncate location to max 20 chars if provided
+      const sanitizedLocation = location ? location.slice(0, 20).trim() || null : null
+      const todo = await prisma.todo.create({ data: { title, location: sanitizedLocation } })
       reply.code(201).send(todo)
     })
 
@@ -132,6 +135,61 @@ describe('Todo API', () => {
       const todos = await prisma.todo.findMany()
       expect(todos).toHaveLength(1)
       expect(todos[0].title).toBe('Persistent Todo')
+    })
+
+    it('creates a todo with location', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/todos',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ title: 'Todo with location', location: 'Home' }),
+      })
+
+      expect(response.statusCode).toBe(201)
+      const todo = JSON.parse(response.body)
+      expect(todo).toMatchObject({
+        title: 'Todo with location',
+        location: 'Home',
+        completed: false,
+      })
+    })
+
+    it('creates a todo without location', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/todos',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ title: 'Todo without location' }),
+      })
+
+      expect(response.statusCode).toBe(201)
+      const todo = JSON.parse(response.body)
+      expect(todo).toMatchObject({
+        title: 'Todo without location',
+        location: null,
+        completed: false,
+      })
+    })
+
+    it('truncates location to max 20 characters', async () => {
+      const longLocation = 'This is a very long location'
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/todos',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ title: 'Todo with long location', location: longLocation }),
+      })
+
+      expect(response.statusCode).toBe(201)
+      const todo = JSON.parse(response.body)
+      expect(todo.location).toBe('This is a very long')
+      expect(todo.location.length).toBeLessThanOrEqual(20)
     })
   })
 
