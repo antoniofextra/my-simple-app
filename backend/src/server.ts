@@ -44,15 +44,26 @@ fastify.delete('/api/todos', async (request, reply) => {
 
 const start = async () => {
   try {
-    // Initialize Prisma Client - this may fail if database is unavailable
-    // but the server should still start to respond to health checks
-    try {
-      prisma = new PrismaClient()
-      await prisma.$connect()
-      fastify.log.info('Database connected')
-    } catch (dbErr) {
-      fastify.log.warn(`Failed to connect to database: ${String(dbErr)}`)
-      // Continue anyway - endpoints will fail with proper error messages
+    // Initialize Prisma Client with retry logic
+    let retries = 3
+    let connected = false
+    
+    while (retries > 0 && !connected) {
+      try {
+        prisma = new PrismaClient()
+        await prisma.$connect()
+        fastify.log.info('Database connected')
+        connected = true
+      } catch (dbErr) {
+        retries--
+        if (retries > 0) {
+          fastify.log.warn(`Failed to connect to database, retrying... (${retries} attempts left)`)
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        } else {
+          fastify.log.warn(`Failed to connect to database after retries: ${String(dbErr)}`)
+          // Continue anyway - health endpoint will work, but data endpoints will fail
+        }
+      }
     }
 
     await fastify.listen({ port: 4000 })
